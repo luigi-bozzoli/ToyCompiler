@@ -1,0 +1,77 @@
+proc succFibo(int n) int:
+int ret;
+if n < 0 then
+ret:=-1;
+write("La funzione di fibonacci non è definita per numeri negativi\n");
+elif n=0 then
+ret:=0;
+elif n=1 then
+ret:=1;
+else
+n:=n-1;
+ret:=succFibo(n);
+n:=n-1;
+ret:=ret+succFibo(n);
+fi;
+->ret
+corp;
+
+proc math(int calc, n1,n2) int,int,int:
+int ret;
+if calc=1 then
+ret:=n1+n2;
+write("La somma dei due numeri è:\n",ret);
+fi;
+if calc=2 then
+ret:=0;
+while n2>0 do
+ret:=ret+n1;
+n2:=n2-1;
+od;
+write("La moltiplicazione dei due numeri è:\n",ret);
+fi;
+if calc = 3 then
+if n1>=0 && n2>=0 then
+ret:=n1/n2;
+write("la divisione fra i due numeri è:\n",ret);
+fi;
+fi;
+if calc=4 then
+ret:=1;
+while n2<>0 do
+ret:=ret*n1;
+n2:=n2-1;
+od;
+write("Il risultato dell'elevamento a potenza è:\n",ret);
+fi;
+-> calc,n1,n2
+corp;
+
+proc main()void:
+int operation, con := 1;
+int a,b,result;
+while con = 1 do
+    write("Scegli l'operazione che vuoi effettuare:\n");
+        write("1:Somma di due numeri\n");
+        write("2:Moltiplicazione di due numeri con la somma\n");
+        write("3:Divisione intera fra due positivi\n");
+        write("4:Elevamento a potenza\n");
+         write("5:Successione di fibonacci\n");
+        readln(operation);
+        if operation=5 then
+        write("Inserisci un numero:\n");
+        readln(a);
+        write("Il risultato è:",succFibo(a));
+        else
+        write("Inserisci i due numeri su cui vuoi eseguire il calcolo:\n");
+        readln(a);
+        readln(b);
+        math(operation,a,b);
+        fi;
+        write(" Vuoi proseguire? 1:si, 0:no\n");
+        readln(con);
+        od;
+        ->
+        null
+        corp;
+

@@ -1,0 +1,34 @@
+int a,b,c, d, e, f, g;
+
+
+proc main() void:
+write("a");
+write(factorial(2));
+factorial(2);
+-> null
+corp;
+proc factorial(int n)int:
+    int result := 0;
+    float f := 0.0;
+
+    string s := "2";
+
+    result := 3 + 4;
+
+    while "s" = s do
+        while n > 0 do
+        write("a");
+        od;
+        od;
+
+    if n = 0 then
+        if n = 0 then
+          write("a");
+          fi;
+	result := 1;
+    else
+	result := n * factorial(n - 1);
+    fi;
+    ->
+    result
+corp;

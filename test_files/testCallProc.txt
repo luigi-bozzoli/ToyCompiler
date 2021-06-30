@@ -1,0 +1,92 @@
+proc main()void:
+int operation, con;
+float a := 3.4, b, result;
+string stringa := "Jjsaj", stringa1 := "string", stringa2 := "string";
+string i := "a", j := "b";
+bool tot, tot1, pippo := testBool(true);
+bool test := true, test1 := false;
+int totore := 1, totore2 := 1, totore3 := 1, totore4 := 1;
+a , b := add (3.0, 3.0);
+test, test1 := false, false;
+test := true;
+test := stringa <> stringa1;
+/*
+1) ignora i 2 output
+2) salva i 2 output
+3) ignora il singolo output
+4) salva l'output
+*/
+        readln(a);
+        write(a);
+        readln(a);
+        add(a, b);
+        a, b := add(a, b);
+        diff(a, b);
+        result := diff(a, b);
+        stringa := testString(stringa1, stringa1);
+        test := testBool(1 < 0);
+
+        ->
+        null
+        corp;
+
+        proc add(float a,b) float, float:
+        ->a+b, diff(a, b)
+        corp;
+
+        proc diff(float a, b) float:
+        bool test1 := true, test2 := false;
+        -> a-b
+        corp;
+
+        proc testString(string s, r) string:
+        int test1, test2;
+        -> "null"
+        corp;
+
+        proc testBool (bool b) bool:
+        int test1, test2;
+        -> true
+        corp;
+
+        proc testVoid(int x) void:
+        -> null
+        corp;
+
+        proc multAddDiff()int, int, int :
+        	int primo, secondo, mul, add, diff;
+
+        	write("Inserire il primo argomento:\n");
+        	readln(primo);
+        	write("Inserire il secondo argomento:\n");
+        	readln(secondo);
+        	mul, add, diff := primo * secondo, primo + secondo, primo - secondo;
+        	-> mul, add, diff
+        corp;
+
+        proc succFibo(int n) int:
+        -> 3
+        corp;
+
+        proc writeNewLines(int n)void :
+            int test1, test2, ret;
+
+if n < 0 then
+ret:=-1;
+write("La funzione di fibonacci non è definita per numeri negativi\n");
+elif n=0 then
+ret:=0;
+elif n=1 then
+ret:=1;
+else
+n:=n-1;
+ret:=succFibo(n);
+n:=n-1;
+ret:=ret+succFibo(n);
+fi;
+        	while n >0 do
+        		write("\n");
+        		n := n -1;
+        	od;
+        	-> null
+        corp;

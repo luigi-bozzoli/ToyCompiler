@@ -1,0 +1,320 @@
+import Albero.*;
+import TabSym.*;
+import java.util.*;
+import Albero.Nodi.*;
+
+parser code{:
+public Program albero;
+public Symtable rootSymTable = new Symtable();
+:}
+// Declare terminals and nonterminals in the grammar
+terminal SEMI, COMMA, ID, INT, STRING, FLOAT,
+ BOOL, PROC, LPAR, RPAR, COLON, CORP, VOID, IF , THEN, ELIF, FI, ELSE, WHILE, DO, OD, READ, WRITE,
+ ASSIGN, PLUS, MINUS, TIMES, DIV, EQ, NE, LT, LE, GT, GE, AND, OR, NOT, NULL, TRUE, FALSE, INT_CONST, FLOAT_CONST, STRING_CONST,RETURN,COMMENT;
+//terminal String RESISTOR;
+nonterminal Program, VarDeclList, ProcList, VarDecl, Type, IdListInit, Proc, ResultTypeList,
+ReturnExprs, ExprList, ParamDeclList, ParDecl, IdList, ResultType, StatList, Stat, IfStat,
+ElifList, Elif, Else, WhileStat, ReadlnStat, WriteStat, AssignStat, CallProc, Expr;
+
+
+precedence left  AND, OR, NOT;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIV;
+precedence nonassoc EQ, NE, LT, LE, GT, GE;
+// Now the grammar itself
+start with Program;
+
+
+Program ::= VarDeclList:vdl ProcList:pl {:
+                                            albero = new Program((ArrayList<VarDecl>)vdl, (ArrayList<Proc>)pl);
+                                            Visitor v = new Visitor();
+                                            v.saveFileXML((Program)albero);
+
+                                            ArrayList<VarDecl> varList = (ArrayList<VarDecl>)vdl;
+                                            for (VarDecl var : varList) {
+                                                rootSymTable.addSymbols(var.toVariables());
+                                            }
+
+                                            ArrayList<Proc> procList = (ArrayList<Proc>)pl;
+
+                                            for (Proc proc : procList){
+                                                Simbolo sym = proc.toFunzione();
+                                                rootSymTable.addSymbol(sym);
+                                            }
+
+
+                                            AnalizzatoreSemantico analizzatoreSemantico = new AnalizzatoreSemantico(rootSymTable, albero);
+                                            analizzatoreSemantico.checkDeclaration();
+                                            analizzatoreSemantico.checkType();
+                                            v.saveCFile(albero);
+
+                                            RESULT = albero;
+                                        :} ;
+
+VarDeclList ::= /* empty */{:
+RESULT = new ArrayList<VarDecl>();
+:}
+	| VarDecl:vd VarDeclList:vdl {: ((ArrayList<VarDecl>) vdl).add((VarDecl)vd);
+	                                RESULT = vdl;
+	                             :};
+
+ProcList ::= Proc:p{:ArrayList<Proc> a = new ArrayList<Proc>();
+                                             a.add((Proc) p);
+                                             RESULT = a;
+
+:}
+	| Proc:p ProcList:pl {:
+	       ((ArrayList<Proc>) pl).add((Proc)p);
+           	                        RESULT = pl;
+	:};
+
+VarDecl ::= Type:t IdListInit:ili SEMI{:
+             RESULT = new VarDecl((String)t, (ArrayList<Id>) ili);
+:};
+
+Type ::= INT:v {: RESULT = (String)v; :} | BOOL:v{:RESULT= (String)v; :} | FLOAT:v{:RESULT=(String)v; :} | STRING:v{: RESULT = (String)v; :};
+
+IdListInit ::= ID:v {: ArrayList<Id> a = new ArrayList<Id>(); a.add(new Id((String)v)); RESULT = a;:}
+	| IdListInit:ili COMMA ID:v{:
+	       ((ArrayList<Id>) ili).add(new Id((String)v)); RESULT = ili;
+	:}
+	| ID:v ASSIGN Expr:e{:
+	      ArrayList<Id> a = new ArrayList<Id>();
+	      a.add(new AssignId(new Id((String)v),(Expr)e ));
+          	 RESULT = a;
+	:}
+	| IdListInit:ili COMMA ID:v ASSIGN Expr:e{:
+	  ArrayList<Id> a = ((ArrayList<Id>) ili);
+	  a.add(new AssignId(new Id((String)v),(Expr)e ));
+	RESULT=a;
+	:};
+
+Proc ::= PROC ID:v LPAR ParamDeclList:pdl RPAR ResultTypeList:rtl COLON
+		VarDeclList:vdl StatList:sl RETURN ReturnExprs:re CORP SEMI{:
+		ProcBody body=new ProcBody((ArrayList<VarDecl>)vdl,(ArrayList<Stat>)sl, (ReturnExpr)re);
+	Proc p = new Proc(((String) v), (ArrayList<ParDecl>)pdl, (ArrayList<String>)rtl,body);
+
+	Symtable table = new Symtable();
+	table.setPadre(rootSymTable);
+	table.setLivello(1);
+	p.setSymtable(table);
+
+	ArrayList<VarDecl> varDeclArrayList = (ArrayList<VarDecl>)vdl;
+
+	for (VarDecl var : varDeclArrayList) {
+	    table.addSymbols(var.toVariables());
+	}
+
+	ArrayList<ParDecl> parDeclArrayList = (ArrayList<ParDecl>)pdl;
+	for (ParDecl par : parDeclArrayList) {
+    	    table.addSymbols(par.toVariables());
+    	}
+
+	RESULT=p;
+		:}
+	| PROC ID:v LPAR RPAR ResultTypeList:rtl COLON
+		VarDeclList:vdl StatList:sl RETURN ReturnExprs:re CORP SEMI{:
+				ProcBody body=new ProcBody((ArrayList<VarDecl>)vdl,(ArrayList<Stat>)sl, (ReturnExpr)re);
+        	Proc p = new Proc(((String) v), null, (ArrayList<String>)rtl,body);
+
+        	Symtable table = new Symtable();
+            table.setPadre(rootSymTable);
+            table.setLivello(1);
+            p.setSymtable(table);
+            ArrayList<VarDecl> varDeclArrayList = (ArrayList<VarDecl>)vdl;
+
+            for (VarDecl var : varDeclArrayList) {
+                table.addSymbols(var.toVariables());
+            }
+
+        	RESULT=p;
+:}
+		|PROC ID:v LPAR RPAR ResultTypeList:rtl COLON
+         		VarDeclList:vdl RETURN ReturnExprs:re CORP SEMI{:
+         		ProcBody body=new ProcBody((ArrayList<VarDecl>)vdl,null, (ReturnExpr)re);
+                	Proc p = new Proc(((String) v), null, (ArrayList<String>)rtl,body);
+
+                	Symtable table = new Symtable();
+                    table.setPadre(rootSymTable);
+                    table.setLivello(1);
+                    p.setSymtable(table);
+                    ArrayList<VarDecl> varDeclArrayList = (ArrayList<VarDecl>)vdl;
+
+                    for (VarDecl var : varDeclArrayList) {
+                        table.addSymbols(var.toVariables());
+                    }
+
+                	RESULT=p;
+                                                        		:}
+         		|PROC ID:v LPAR ParamDeclList:pdl RPAR ResultTypeList:rtl COLON
+                 		VarDeclList:vdl RETURN ReturnExprs:re CORP SEMI{:
+
+    ProcBody body=new ProcBody((ArrayList<VarDecl>)vdl,null, (ReturnExpr)re);
+  	Proc p = new Proc(((String) v), (ArrayList<ParDecl>)pdl, (ArrayList<String>)rtl,body);
+
+  	Symtable table = new Symtable();
+  	table.setPadre(rootSymTable);
+    table.setLivello(1);
+    p.setSymtable(table);
+    ArrayList<VarDecl> varDeclArrayList = (ArrayList<VarDecl>)vdl;
+
+    for (VarDecl var : varDeclArrayList) {
+        table.addSymbols(var.toVariables());
+    }
+
+    	ArrayList<ParDecl> parDeclArrayList = (ArrayList<ParDecl>)pdl;
+    	for (ParDecl par : parDeclArrayList) {
+        	    table.addSymbols(par.toVariables());
+        	}
+
+  	RESULT=p;
+:};
+
+ResultTypeList ::= ResultType:rt {:
+ ArrayList<String> a = new ArrayList<String>(); a.add((String)rt); RESULT = a;
+
+:}	| ResultType:rt COMMA ResultTypeList:rtl {: ((ArrayList<String>) rtl).add((String)rt); RESULT = rtl; :};
+
+ReturnExprs::=  ExprList:el{:
+        RESULT = new ReturnExpr((ArrayList<Expr>)el);
+:};
+
+
+
+ExprList ::= Expr:ex {:
+ ArrayList<Expr> a = new ArrayList<Expr>();
+                        a.add((Expr)ex);
+                        RESULT=a;
+:}
+
+	| Expr:ex COMMA ExprList:el {:
+((ArrayList<Expr>) el).add((Expr)ex); RESULT = el;
+:};
+
+ParamDeclList ::= ParDecl:pd {:
+  ArrayList<ParDecl> a = new ArrayList<ParDecl>();
+                              	a.add((ParDecl)pd);
+                              	RESULT=a;
+:}
+| ParamDeclList:pdl SEMI ParDecl:pd {:
+((ArrayList<ParDecl>) pdl).add((ParDecl)pd); RESULT = pdl;
+    :};
+
+ParDecl ::= Type:t IdList:il{:
+RESULT = new ParDecl((String) t, (ArrayList<Id>)il);
+:};
+
+IdList ::= ID:v {:ArrayList<Id> a = new ArrayList<Id>();
+                  					a.add(new Id((String) v));
+                  					RESULT=a;:}
+                  					 | IdList:il COMMA ID:v{:
+                  					  ((ArrayList<Id>) il).add(new Id((String) v));
+                                                                    RESULT= il;
+
+:};
+
+ResultType ::= Type:t {:
+    RESULT= ((String) t);:}
+| VOID:v {:RESULT= ((String)v);:};
+
+StatList ::= Stat:s{:
+    ArrayList<Stat> a = new ArrayList<Stat>();
+                           a.add((Stat) s);
+                           RESULT=a;
+ :}
+ | Stat:s StatList:sl{:
+((ArrayList<Stat>) sl).add((Stat) s);
+     						RESULT= sl;
+ :};
+
+Stat ::= IfStat:ifs SEMI{:
+RESULT=ifs;
+:}
+	| WhileStat:ws SEMI{:
+RESULT=ws;
+	:}
+	| ReadlnStat:rs SEMI{:
+	RESULT=rs;
+	:}
+	| WriteStat:wrs SEMI{:
+	RESULT=wrs;
+	:}
+	| AssignStat:as SEMI{:
+	RESULT=as;
+	:}
+	| CallProc:cp SEMI{:
+RESULT=cp;
+	:};
+
+IfStat ::= IF Expr:e THEN StatList:sl ElifList:el Else:ele FI{:
+	RESULT = new IfStat((Else) ele,(Expr) e, (ArrayList<Stat>) sl,  (ArrayList<Elif>)el);:};
+
+ElifList ::= /* empty */{:
+RESULT = new ArrayList<Elif>();:}
+	| Elif:ei ElifList:el{:
+	((ArrayList<Elif>) el).add((Elif) ei);
+                                        RESULT = el;:};
+
+Elif ::= ELIF Expr:e THEN StatList:sl{:
+ RESULT = new Elif((Expr) e, (ArrayList<Stat>) sl);:};
+
+Else ::= /* empty */{:
+RESULT = null;:} | ELSE StatList:sl{:
+ RESULT = new Else((ArrayList<Stat>) sl); :};
+
+WhileStat ::= WHILE StatList:sl1 RETURN Expr:e DO StatList:sl2 OD{:
+RESULT = new WhileStat((ArrayList<Stat>) sl1,(Expr) e, (ArrayList<Stat>) sl2);:}
+| WHILE Expr:e DO StatList:sl OD{:
+    RESULT = new WhileStat(null, (Expr) e,(ArrayList<Stat>) sl);:}
+    | DO VarDeclList:vdl StatList:sl OD WHILE Expr:e {: new WhileStat(true,(ArrayList<Stat>) sl1,(Expr) e,(ArrayList<VarDecl>) vdl );:}
+    ;
+
+ReadlnStat ::= READ LPAR IdList:il RPAR{:
+     RESULT = new ReadlnStat((ArrayList<Id>) il);:};
+
+WriteStat ::=  WRITE LPAR ExprList:el RPAR{:
+   RESULT = new WriteStat((ArrayList<Expr>) el);:};
+
+AssignStat ::= IdList:il ASSIGN  ExprList:el{:
+RESULT = new AssignStat((ArrayList<Id>) il,(ArrayList<Expr>) el);:};
+
+CallProc ::= ID:v LPAR ExprList:el RPAR{:
+RESULT= new CallProc(new Id((String) v),(ArrayList<Expr>) el); :}
+| ID:v LPAR RPAR{:RESULT= new CallProc(new Id((String) v), null);:};
+
+Expr ::= NULL:v {:RESULT=new Expr(Constant.NULL_CONST,null,null,new Id("null"));:}
+	| TRUE:v {:RESULT=new Expr(Constant.BOOL_CONST,null,null,new Id("true"));:}
+	| FALSE:v {:RESULT=new Expr(Constant.BOOL_CONST,null,null,new Id("false"));:}
+	| INT_CONST:v {: RESULT=new Expr(Constant.INT_CONST,null,null,new Id((String)v));:}
+	| FLOAT_CONST:v {:RESULT=new Expr(Constant.FLOAT_CONST,null,null,new Id((String)v));:}
+	| STRING_CONST:v {:RESULT=new Expr(Constant.STRING_CONST,null,null,new Id((String)v));:}
+	| ID:v {:RESULT=new Expr(Constant.ID_CONST,null,null,new Id((String)v));:}
+    | CallProc:cp{:
+    RESULT = new Expr(Constant.CALL_PROC_OP,null,null,null,(Stat)cp);:}
+	| Expr:e1  PLUS Expr:e2 {:
+    RESULT = new Expr(Constant.SUM_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1  MINUS Expr:e2{:
+    RESULT = new Expr(Constant.DIFF_OP,(Expr)e1,(Expr)e2,null);;:}
+	| Expr:e1 TIMES Expr:e2{:
+    RESULT = new Expr(Constant.MUL_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1  DIV Expr:e2{:
+    RESULT = new Expr(Constant.DIV_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1  AND Expr:e2{:
+    RESULT = new Expr(Constant.AND_OP,(Expr)e1,(Expr)e2,null);;:}
+	| Expr:e1  OR Expr:e2{:
+    RESULT = new Expr(Constant.OR_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1  GT Expr:e2{:
+    RESULT = new Expr(Constant.GT_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1 GE Expr:e2{:
+    RESULT = new Expr(Constant.GE_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1 LT Expr:e2{:
+    RESULT = new Expr(Constant.LT_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1  LE Expr:e2{:
+    RESULT = new Expr(Constant.LE_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1  EQ Expr:e2{:
+        RESULT = new Expr(Constant.EQ_OP,(Expr)e1,(Expr)e2,null);:}
+	| Expr:e1  NE Expr:e2{:
+        RESULT = new Expr(Constant.NE_OP,(Expr)e1,(Expr)e2,null);:}
+	| MINUS Expr:e{: RESULT = new Expr(Constant.MINUS_OP,(Expr)e,null,null);:}
+	| NOT Expr:e{:RESULT=new Expr(Constant.NOT_OP,(Expr)e,null,null);
+ :};

@@ -1,0 +1,51 @@
+float pippo;
+proc main()void:
+bool pollo:=true;
+int operation, con := 1;
+float a,b,result;
+int c;
+while con = 1 do
+readln(pollo);
+write("Okok",pollo);
+while c:=0; ->c=1 do
+ write("1:+");
+        write("2:-");
+        od;
+    write("Scegli l'operatore aritmetico che vuoi utilizzare:");
+        write("1:+");
+        write("2:-");
+        write("3:*");
+        write("4:/");
+        readln(operation);
+        write("Inserisci i due numeri su cui vuoi eseguire il calcolo:",12);
+        readln(a);
+        readln(b);
+        if operation = 1 then result := add(a,b);
+        elif operation = 2 then result := sub(a,b);
+        elif operation = 4 then result := div(a,b);
+        elif operation = 3 then result := mul(a,b);
+        fi;
+        write("Il risultato dell'operazione è:");
+        write(result);
+        write(" Vuoi proseguire? 1:si, 0:no");
+        readln(con);
+        od;
+        ->
+        null
+        corp;
+
+        proc add(float a,b) float:
+        ->a+b
+        corp;
+
+        proc sub(float a,b)float:
+        ->a-b
+        corp;
+
+        proc mul(float a,b)float:
+        ->a*b
+        corp;
+
+        proc div(float a,b)float:
+        ->a/b
+        corp;
