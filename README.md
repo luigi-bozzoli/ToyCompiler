@@ -1,7 +1,14 @@
-- Modifica dell'albero rispetto all'esercitazione 4.
+# Toy compiler
 
-- Gestione dei ritorni multipli attraverso i puntatori per la generazione del codice C.
+Compiler for [Toy](https://github.com/Ratstail91/Toy) written in Java
 
-- I valori booleani sono stati gestiti con gli interi 0 e 1.
+## Languages and Tools
++ Java
++ [CUP](http://www2.cs.tum.edu/projects/cup/)
++ IntelliJ IDEA
 
-- Delegazione ai nodi dell'albero del controllo della dichiarazione e del controllo dei tipi.
+## Contributors
+[Antonio Martucci](https://github.com/AntonioMartucci)
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
